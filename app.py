@@ -29,7 +29,7 @@ migrate=Migrate(app,db)
 #JWT SECRET KEY for signing JWT tokens
 app.config['JWT_SECRET_KEY']=os.getenv("JWT_SECRET_KEY")
 #where to look for the token
-#store it in the cookies
+#store JWT it in the cookie
 app.config['JWT_TOKEN_LOCATION']=['cookies']
 #name for cookie
 app.config['JWT_ACCESS_COOKIE_NAME']="access_token"
@@ -48,6 +48,7 @@ app.config['JWT_COOKIE_SAMESITE']='Lax' #Strict in production
 app.config['JWT_REFRESH_TOKEN_EXPIRES']=timedelta(days=1)
 #initialize app with JWT
 jwt=JWTManager()
+jwt.init_app(app)
 #initialize app with Bcrypt
 bcrypt=Bcrypt()
 bcrypt.init_app(app)
@@ -77,9 +78,9 @@ def register():
     # confirm_password=data.get("confirm_password")
     # print("Confirm password: ",confirm_password)
     #bad request status code 400
-    if not username or not email:
+    if not username or not email or not password:
         return jsonify({
-            "error":"Username and Email are required"
+            "error":"username,email and password are required"
         }),400
     existing_user=User.query.filter_by(email=email).first()
     #conflicting request ie status code 409
@@ -101,7 +102,6 @@ def register():
             "id":user.id,
             "username":user.username,
             "email":user.email,
-            "password":user.password
         }
     }),201
 
@@ -110,15 +110,14 @@ def register():
 def login():
     #get json data
     data=request.get_json()
+    if not data:
+        return jsonify({
+            "error":"JSON body required"
+        }),400
     #check if username exist
     username=data.get("username")
-    print("User username: ",username)
-    # #check email
-    # email=data.get("email")
-    # print("User email: ",email)
     #check password if correct
     password=data.get("password")
-    print("User password: ",password)
     if not username or not password:
         return jsonify({
             "error":"Provide a username and password"
@@ -131,41 +130,67 @@ def login():
         return jsonify({
             "error":"Invalid username"
         }),401
-    if not check_password_hash(user.password,password):
+    if not bcrypt.check_password_hash(user.password,password):
         return jsonify({
             "error":"Invalid credentials"
         }),401
     #create access token
     access_token=create_access_token(identity=str(user.id))
+    refresh_token=create_refresh_token(identity=str(user.id))
+    #create response
+    response=jsonify({
+        "message":"login successful",
+        "username":user.username
+    })
+    #put JWT inside cookie
+    set_access_cookies(response,access_token)
+    #set refresh tokens
+    set_refresh_cookies(response,access_token)
+    return response,200
+#refresh token
+@app.post("/api/v1/auth/refresh")
+@jwt_required(refresh=True)
+def refresh():
+    user_id=get_jwt_identity()
+    new_access_token=create_access_token(identity=str(user_id))
+    response=jsonify({
+        "message":"Access token refreshed"
+    })
+    set_access_cookies(response,new_access_token)
+    return response,200
+    #handle JWT errors
+#expired JWT token
+@jwt.expired_token_loader
+def expired_token_loader(jwt_header,jwt_payload):
     return jsonify({
-        "username":user.username,
-        "password":user.password,
-        "access_token":access_token
-    }),200
+        "error":"Token expired",
+        "message":"Your access token has expired.Please refresh your token or login again"
 
-# # users 
-# @app.get("/api/v1/users/<id>")
-# def users(id):
-#     if id:
-#         try:
-#             id=int(id)
-#         except ValueError:
-#             return jsonify({
-#                 "error":"Id must be an integer"
-#             }),400
-#         return jsonify({
-#             "error":"User not found"
-#         }),404
-
-
-#     #
-#     # id=request.args.get("id")
-#     return 'Users'
+    }),401
+#invalid JWT tokens provided
+@jwt.invalid_token_loader
+def invalid_token_loader(error):
+    return jsonify({
+        "error":"Invalid token",
+        "message":"The provided JWT Is invalid"
+    }),401
+#no JWT token provided
+@jwt.unauthorized_loader
+def missing_token_callback(error):
+    return jsonify({
+        "error":"Authenticatation required",
+        "message":"Please login to access this resource"
+    }),401
 
 # expenses 
 @app.get("/api/v1/expenses")
+@jwt_required()
 def expenses():
-    return 'Expenses'
+    user_id=get_jwt_identity()
+    return jsonify({
+        "message":"Authenticated successfully",
+        "user_id":user_id
+    }),200
 #user model
 class User(db.Model):
     id=db.Column(db.Integer,primary_key=True)
@@ -183,7 +208,7 @@ class Expenses(db.Model):
     category=db.Column(db.String(50))
     description=db.Column(db.String(100))
     #foreign key ie points to the primary key of another table
-    user_id=db.Column(db.Interval,db.ForeignKey("user.id"))
+    user_id=db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
     #connect owner to the expenses ie know who owns which expenses
     owner=db.relationship("User",back_populates="expenses")
     
