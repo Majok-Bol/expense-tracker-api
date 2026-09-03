@@ -74,8 +74,8 @@ def register():
     password=data.get("password")
     print("Password: ",password)
     #confirm password
-    confirm_password=data.get("confirm_password")
-    print("Confirm password: ",confirm_password)
+    # confirm_password=data.get("confirm_password")
+    # print("Confirm password: ",confirm_password)
     #bad request status code 400
     if not username or not email:
         return jsonify({
