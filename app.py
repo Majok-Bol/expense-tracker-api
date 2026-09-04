@@ -67,13 +67,13 @@ def register():
         }),400
     #get username
     username=data.get("username")
-    print("Username: ",username)
+    # print("Username: ",username)
     #get email
     email=data.get("email")
-    print("Email address: ",email)
+    # print("Email address: ",email)
     #get password
     password=data.get("password")
-    print("Password: ",password)
+    # print("Password: ",password)
     #confirm password
     # confirm_password=data.get("confirm_password")
     # print("Confirm password: ",confirm_password)
@@ -187,6 +187,15 @@ def missing_token_callback(error):
 @jwt_required()
 def expenses():
     user_id=get_jwt_identity()
+    data=request.get_json()
+    if not data:
+        return jsonify({
+            "error":"JSON body required"
+        }),400
+
+    category=data.get("category")
+    description=data.get("description")
+    amount=data.get("amount")
     return jsonify({
         "message":"Authenticated successfully",
         "user_id":user_id
