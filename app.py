@@ -183,9 +183,9 @@ def missing_token_callback(error):
     }),401
 
 # expenses 
-@app.get("/api/v1/expenses")
+@app.post("/api/v1/expenses")
 @jwt_required()
-def expenses():
+def create_expense():
     user_id=get_jwt_identity()
     data=request.get_json()
     if not data:
@@ -194,12 +194,120 @@ def expenses():
         }),400
 
     category=data.get("category")
+    if not category:
+        return jsonify({
+            "error":"Provide category"
+        }),400
     description=data.get("description")
+    if not description:
+        return jsonify({
+            "error":"Provide description"
+        }),400
     amount=data.get("amount")
+    if not isinstance(amount,(int,float)) or amount<=0:
+        return jsonify({
+            "error":"Amount must be a positive number"
+        }),400
+    #create expense
+    expense=Expenses(category=category,description=description,amount=amount,user_id=user_id)
+    db.session.add(expense)
+    db.session.commit()
     return jsonify({
-        "message":"Authenticated successfully",
-        "user_id":user_id
+        "message":"Expense created successfully",
+        "expense":{
+            "category":expense.category,
+            "description":expense.description,
+            "amount":expense.amount,
+            "user_id":expense.user_id
+        }
+    }),201
+
+#fetch expenses
+@app.get("/api/v1/expenses")
+@jwt_required()
+def get_expense():
+    user_id=get_jwt_identity()
+    expenses=Expenses.query.filter_by(user_id=user_id).all()
+    return jsonify([{
+        "id":expense.id,
+        "category":expense.category,
+        "description":expense.description,
+        "amount":expense.amount
+    } for expense in expenses]),200
+#delete task
+@app.delete("/api/v1/expenses/<id>")
+@jwt_required()
+def delete_expense(id):
+    user_id=get_jwt_identity()
+    print('Expense to delete id: ',user_id)
+    if id:
+        try:
+            id=int(id)
+        except ValueError:
+            return jsonify({
+                "error":"Id must be an integer"
+            }),400
+    expense=Expenses.query.filter_by(user_id=user_id,id=id).first()
+    db.session.delete(expense)
+    db.session.commit()
+    return "",204
+
+
+#update expenses
+@app.patch("/api/v1/expenses/<id>")
+@jwt_required()
+def update_expense(id):
+    user_id=get_jwt_identity()
+    print("Expense id to update: ",user_id)
+    if id:
+        try:
+            id=int(id)
+        except ValueError:
+            return jsonify({
+                "error":"Id must be an integer"
+            }),400
+    
+    #get expense
+    expense=Expenses.query.filter_by(user_id=user_id,id=id).first()
+    # print('Expense: ',expense)
+    if not expense:
+        return jsonify({
+            "error":"Expense not found"
+        }),404
+    #data
+    data=request.get_json()
+    if not data:
+        return jsonify({
+            "error":"JSON body required"
+        }),400
+    #update only provided fields
+    if "category" in data:
+        expense.category=data["category"]
+    if "description" in data:
+        expense.description=data["description"]
+    if "amount" in data:
+        expense.amount=data["amount"]
+
+    print(data["category"])
+    print(data["description"])
+    print(data["amount"])
+    #save changes
+    db.session.commit()
+    return jsonify({
+        "message":"Expense updated successfully",
+        "Updated expense":{
+            "id":expense.id,
+            "category":expense.category,
+            "description":expense.description,
+            "amount":expense.amount
+        }
     }),200
+    
+
+
+
+
+
 #user model
 class User(db.Model):
     id=db.Column(db.Integer,primary_key=True)
