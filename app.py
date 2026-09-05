@@ -222,18 +222,40 @@ def create_expense():
         }
     }),201
 
-#fetch expenses
+# #fetch expenses
+# @app.get("/api/v1/expenses")
+# @jwt_required()
+# def get_expense():
+#     user_id=get_jwt_identity()
+#     expenses=Expenses.query.filter_by(user_id=user_id).all()
+#     return jsonify([{
+#         "id":expense.id,
+#         "category":expense.category,
+#         "description":expense.description,
+#         "amount":expense.amount
+#     } for expense in expenses]),200
+
+#filter expenses
+#search for expense
 @app.get("/api/v1/expenses")
 @jwt_required()
-def get_expense():
+def get_expenses():
     user_id=get_jwt_identity()
-    expenses=Expenses.query.filter_by(user_id=user_id).all()
+    category=request.args.get("category")
+    query=Expenses.query.filter_by(user_id=user_id)
+    print("Query: ",query)
+    if category:
+        query=query.filter_by(category=category)
+        print('Query: ',query)
+    expenses=query.all()
     return jsonify([{
         "id":expense.id,
         "category":expense.category,
         "description":expense.description,
         "amount":expense.amount
-    } for expense in expenses]),200
+
+    }] for expense in expenses)
+
 #delete task
 @app.delete("/api/v1/expenses/<id>")
 @jwt_required()
