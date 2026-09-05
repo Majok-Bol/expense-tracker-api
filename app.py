@@ -241,21 +241,46 @@ def create_expense():
 @jwt_required()
 def get_expenses():
     user_id=get_jwt_identity()
+    id=request.args.get("id")
     category=request.args.get("category")
+    search=request.args.get("search")
+    description=request.args.get("description")
+    amount=request.args.get("amount")
+    #fetch user id
     query=Expenses.query.filter_by(user_id=user_id)
-    print("Query: ",query)
+    if id:
+        try:
+            id=int(id)
+            query=query.filter(Expenses.id==id)
+        except ValueError:
+            return jsonify({
+                "error":"Id must be an integer"
+            }),400
     if category:
-        query=query.filter_by(category=category)
-        print('Query: ',query)
+        query=query.filter(Expenses.category.ilike(category))
+    if search:
+        query=query.filter(Expenses.description.ilike(f"%{search}%"))
+    if description:
+        query=query.filter(Expenses.description.ilike(f"%{description}%"))
+    if amount:
+        query=query.filter(Expenses.amount.ilike(f"%{amount}%"))
     expenses=query.all()
-    return jsonify([{
-        "id":expense.id,
-        "category":expense.category,
-        "description":expense.description,
-        "amount":expense.amount
-
-    }] for expense in expenses)
-
+    filtered_expenses=[]
+    if not expenses:
+        return jsonify({
+            "error":"Expense not found"
+        }),404
+   
+    for expense in expenses:
+        expense_data={
+            "id":expense.id,
+            "category":expense.category,
+            "description":expense.description,
+            "amount":expense.amount
+        }
+        filtered_expenses.append(expense_data)
+        print("Filtered expeneses: ",filtered_expenses)
+    return jsonify(filtered_expenses),200
 #delete task
 @app.delete("/api/v1/expenses/<id>")
 @jwt_required()
