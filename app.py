@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
-from datetime import timedelta
+from datetime import timedelta,datetime
 from flask_jwt_extended import(
 create_access_token,
 create_refresh_token,
@@ -15,6 +15,7 @@ set_refresh_cookies,
 get_jwt_identity
 )
 from flask_bcrypt import Bcrypt
+from sqlalchemy import func
 #initialize environment variables
 load_dotenv()
 #initialize flask app
@@ -246,8 +247,18 @@ def get_expenses():
     search=request.args.get("search")
     description=request.args.get("description")
     amount=request.args.get("amount")
+    page=request.args.get("page",default=1,type=int)
+    if page<1:
+        return jsonify({
+            "error":"Page must be greater than  or equal to 1"
+        }),400
+    per_page=request.args.get("per_page",default=5,type=int)
+    if per_page<1 or per_page>100:
+        return jsonify({
+            "error":"per page must be between 1 and 100"
+        }),400
     #fetch user id
-    query=Expenses.query.filter_by(user_id=user_id)
+    query=Expenses.query.filter_by(user_id=user_id).order_by(Expenses.created_at.desc())
     if id:
         try:
             id=int(id)
@@ -263,14 +274,28 @@ def get_expenses():
     if description:
         query=query.filter(Expenses.description.ilike(f"%{description}%"))
     if amount:
-        query=query.filter(Expenses.amount.ilike(f"%{amount}%"))
-    expenses=query.all()
-    filtered_expenses=[]
+        try:
+            amount=float(amount)
+            query=query.filter(Expenses.amount==float(amount))
+        except ValueError:
+            return jsonify({
+                "error":"Amount must be a number"
+            }),400
+    # expenses=query.all()
+  
+    #pagination
+    pagination=query.paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+    expenses=pagination.items
     if not expenses:
         return jsonify({
-            "error":"Expense not found"
+            "error":"Page not found",
+            "message":"The requested page does not exist"
         }),404
-   
+    filtered_expenses=[]
     for expense in expenses:
         expense_data={
             "id":expense.id,
@@ -280,7 +305,38 @@ def get_expenses():
         }
         filtered_expenses.append(expense_data)
         print("Filtered expeneses: ",filtered_expenses)
-    return jsonify(filtered_expenses),200
+    return jsonify({
+        "Filtered expenses":filtered_expenses,
+        "pagination":{
+            "page":pagination.page,
+            "per_page":pagination.per_page,
+            "total":pagination.total,
+            "pages":pagination.pages,
+            "has_next":pagination.has_next,
+            "has_prev":pagination.has_prev
+        }
+    }),200
+#calculate category totals
+@app.get("/api/v1/expenses/category-totals")
+@jwt_required()
+def category_totals():
+    user_id=get_jwt_identity()
+    results=db.session.query(Expenses.category,
+    func.sum(Expenses.amount)).filter(Expenses.user_id==user_id).group_by(Expenses.category).all()
+    totals=[]
+    gross_totals=0
+    
+    for category,total in results:
+        totals.append({
+            "category":category,
+            "total":total
+        })
+        gross_totals+=total
+    
+    return jsonify({
+        "category_totals":totals,
+        "gross_total":gross_totals
+    }),200
 #delete task
 @app.delete("/api/v1/expenses/<id>")
 @jwt_required()
@@ -371,6 +427,7 @@ class Expenses(db.Model):
     amount=db.Column(db.Float)
     category=db.Column(db.String(50))
     description=db.Column(db.String(100))
+    created_at=db.Column(db.DateTime,nullable=False,default=datetime.utcnow)
     #foreign key ie points to the primary key of another table
     user_id=db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
     #connect owner to the expenses ie know who owns which expenses
