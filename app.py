@@ -28,7 +28,7 @@ db=SQLAlchemy(app)
 migrate=Migrate(app,db)
 #configure jwt auth
 #JWT SECRET KEY for signing JWT tokens
-app.config['JWT_SECRET_KEY']=os.getenv("JWT_SECRET_KEY")
+app.config['SECRET_KEY']=os.getenv("SECRET_KEY")
 #where to look for the token
 #store JWT it in the cookie
 app.config['JWT_TOKEN_LOCATION']=['cookies']
