@@ -61,7 +61,6 @@ def hello():
 def register():
     #get json data
     data=request.get_json()
-    print("Data: ",data)
     if not data:
         return jsonify({
             "error":"JSON body required"
@@ -223,18 +222,6 @@ def create_expense():
         }
     }),201
 
-# #fetch expenses
-# @app.get("/api/v1/expenses")
-# @jwt_required()
-# def get_expense():
-#     user_id=get_jwt_identity()
-#     expenses=Expenses.query.filter_by(user_id=user_id).all()
-#     return jsonify([{
-#         "id":expense.id,
-#         "category":expense.category,
-#         "description":expense.description,
-#         "amount":expense.amount
-#     } for expense in expenses]),200
 
 #filter expenses
 #search for expense
