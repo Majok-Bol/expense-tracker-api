@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
-from datetime import timedelta,datetime
+from datetime import timedelta,datetime,timezone
 from flask_jwt_extended import(
 create_access_token,
 create_refresh_token,
@@ -16,6 +16,9 @@ get_jwt_identity
 )
 from flask_bcrypt import Bcrypt
 from sqlalchemy import func
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from zoneinfo import ZoneInfo
 #initialize environment variables
 load_dotenv()
 #initialize flask app
@@ -53,6 +56,8 @@ jwt.init_app(app)
 #initialize app with Bcrypt
 bcrypt=Bcrypt()
 bcrypt.init_app(app)
+#initialize app with flask_limiter
+limiter=Limiter(get_remote_address,app=app)
 @app.route("/")
 def hello():
     return 'Hello world'
@@ -60,7 +65,7 @@ def hello():
 @app.post("/api/v1/auth/register")
 def register():
     #get json data
-    data=request.get_json()
+    data=request.get_json(silent=True)
     if not data:
         return jsonify({
             "error":"JSON body required"
@@ -107,9 +112,10 @@ def register():
 
 #login user
 @app.post("/api/v1/auth/login")
+@limiter.limit("3 per minute")
 def login():
     #get json data
-    data=request.get_json()
+    data=request.get_json(silent=True)
     if not data:
         return jsonify({
             "error":"JSON body required"
@@ -147,6 +153,17 @@ def login():
     #set refresh tokens
     set_refresh_cookies(response,refresh_token)
     return response,200
+
+
+#logout 
+@app.post("/api/v1/auth/logout")
+@jwt_required()
+def logout():
+    response=jsonify({
+        "message":"You have been logged out"
+    })
+    unset_jwt_cookies(response)
+    return response,200
 #refresh token
 @app.post("/api/v1/auth/refresh")
 @jwt_required(refresh=True)
@@ -181,13 +198,18 @@ def missing_token_callback(error):
         "error":"Authenticatation required",
         "message":"Please login to access this resource"
     }),401
-
+#handle rate limiting errors
+@app.errorhandler(429)
+def rate_limit_error(e):
+    return jsonify({
+        "error":"Too many login attempts.Please try again later"
+    }),429
 # expenses 
 @app.post("/api/v1/expenses")
 @jwt_required()
 def create_expense():
     user_id=get_jwt_identity()
-    data=request.get_json()
+    data=request.get_json(silent=True)
     if not data:
         return jsonify({
             "error":"JSON body required"
@@ -209,7 +231,9 @@ def create_expense():
             "error":"Amount must be a positive number"
         }),400
     #create expense
-    expense=Expenses(category=category,description=description,amount=amount,user_id=user_id)
+    expense=Expenses(category=category,description=description,amount=amount,user_id=user_id,created_at=datetime.now(timezone.utc))
+    #set timezone
+    kenyan_time=expense.created_at.astimezone(ZoneInfo("Africa/Nairobi"))
     db.session.add(expense)
     db.session.commit()
     return jsonify({
@@ -218,7 +242,8 @@ def create_expense():
             "category":expense.category,
             "description":expense.description,
             "amount":expense.amount,
-            "user_id":expense.user_id
+            "user_id":expense.user_id,
+            "created_at":kenyan_time.isoformat()
         }
     }),201
 
@@ -291,7 +316,7 @@ def get_expenses():
             "amount":expense.amount
         }
         filtered_expenses.append(expense_data)
-        print("Filtered expeneses: ",filtered_expenses)
+        # print("Filtered expeneses: ",filtered_expenses)
     return jsonify({
         "Filtered expenses":filtered_expenses,
         "pagination":{
@@ -329,7 +354,7 @@ def category_totals():
 @jwt_required()
 def delete_expense(id):
     user_id=get_jwt_identity()
-    print('Expense to delete id: ',user_id)
+    # print('Expense to delete id: ',user_id)
     if id:
         try:
             id=int(id)
@@ -348,7 +373,7 @@ def delete_expense(id):
 @jwt_required()
 def update_expense(id):
     user_id=get_jwt_identity()
-    print("Expense id to update: ",user_id)
+    # print("Expense id to update: ",user_id)
     if id:
         try:
             id=int(id)
@@ -365,7 +390,7 @@ def update_expense(id):
             "error":"Expense not found"
         }),404
     #data
-    data=request.get_json()
+    data=request.get_json(silent=True)
     if not data:
         return jsonify({
             "error":"JSON body required"
@@ -378,9 +403,9 @@ def update_expense(id):
     if "amount" in data:
         expense.amount=data["amount"]
 
-    print(data["category"])
-    print(data["description"])
-    print(data["amount"])
+    # print(data["category"])
+    # print(data["description"])
+    # print(data["amount"])
     #save changes
     db.session.commit()
     return jsonify({
@@ -414,7 +439,7 @@ class Expenses(db.Model):
     amount=db.Column(db.Float)
     category=db.Column(db.String(50))
     description=db.Column(db.String(100))
-    created_at=db.Column(db.DateTime,nullable=False,default=datetime.utcnow)
+    created_at=db.Column(db.DateTime(timezone=True),nullable=False,default=lambda: datetime.now(timezone.utc))
     #foreign key ie points to the primary key of another table
     user_id=db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
     #connect owner to the expenses ie know who owns which expenses
