@@ -1,5 +1,3 @@
-Below is a production-style README tailored to the features actually present in your Flask Expense Tracker API, while also making it clear that some security settings are currently development-oriented.
-
 # 💰 Expense Tracker API
 
 A RESTful **Expense Tracker API** built with **Python and Flask**. The API provides user authentication, JWT-based authorization, expense CRUD operations, filtering, searching, pagination, category-based expense totals, and rate limiting for login attempts.
