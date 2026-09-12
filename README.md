@@ -1035,4 +1035,4 @@ The project serves as a foundation for building more advanced **secure backend A
 
 This project is intended for learning and development purposes.
 
-This README is intentionally aligned with your **current implementation**, rather than claiming features you haven't implemented yet. The **Future Improvements** section gives you a clean progression toward the more security-focused version of the API.
+
