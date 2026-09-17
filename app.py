@@ -233,7 +233,7 @@ def create_expense():
     #create expense
     expense=Expenses(category=category,description=description,amount=amount,user_id=user_id,created_at=datetime.now(timezone.utc))
     #set timezone
-    kenyan_time=expense.created_at.astimezone(ZoneInfo("Africa/Nairobi"))
+    tanzania_time=expense.created_at.astimezone(ZoneInfo("Africa/Tanzania"))
     db.session.add(expense)
     db.session.commit()
     return jsonify({
@@ -243,7 +243,7 @@ def create_expense():
             "description":expense.description,
             "amount":expense.amount,
             "user_id":expense.user_id,
-            "created_at":kenyan_time.isoformat()
+            "created_at":tanzania_time.isoformat()
         }
     }),201
 
