@@ -1,40 +1,46 @@
 # 💰 Expense Tracker API
 
-A RESTful **Expense Tracker API** built with **Python and Flask**. The API provides user authentication, JWT-based authorization, expense CRUD operations, filtering, searching, pagination, category-based expense totals, and rate limiting for login attempts.
+A RESTful **Expense Tracker API** built with **Python and Flask**.
 
-This project is designed as a backend/API development project for learning and practicing **REST API design, authentication, database relationships, SQLAlchemy queries, pagination, and basic API security**.
+The API provides user registration and authentication, JWT-based authorization using cookies, expense CRUD operations, filtering, searching, pagination, category-based expense analytics, password hashing, login rate limiting, database relationships, and timezone-aware expense timestamps.
+
+This project is primarily a **backend/API development and learning project** focused on building practical REST APIs with Flask, SQLAlchemy, authentication, authorization, database queries, and foundational API security.
 
 ---
 
-## 🚀 Features
+##  Features
 
-### 👤 User Authentication
+### User Authentication
 
 * User registration
 * User login
 * Password hashing with Bcrypt
-* JWT authentication
+* JWT-based authentication
 * Access tokens
 * Refresh tokens
-* JWT stored in HTTP cookies
+* JWT tokens stored in HTTP cookies
 * Logout
 * Access-token refresh
-* JWT expiration handling
+* JWT expiration
 * Invalid-token handling
-* Authentication-required handling
+* Missing-authentication handling
+* Duplicate email detection
 
-### 🔐 Basic API Security
+### Basic API Security
 
-* Password hashing with Bcrypt
+* Bcrypt password hashing
 * JWT-protected expense endpoints
 * User-owned expenses
+* User-specific database queries
 * Login rate limiting
 * Input validation
-* HTTP status codes
+* Authentication error handling
 * JWT error handlers
-* User-specific database queries
+* HTTP status codes
+* Environment variables for secrets
+* Cookie-based authentication
 
-### 💰 Expense Management
+### Expense Management
 
 Authenticated users can:
 
@@ -46,21 +52,21 @@ Authenticated users can:
 * Filter expenses
 * Paginate expenses
 * View category totals
-* View their gross expense total
+* View gross expense totals
 
-### 🔎 Filtering & Searching
+### Filtering & Searching
 
 The expense listing endpoint supports:
 
 * Expense ID filtering
 * Category filtering
 * Description searching
-* General text searching
+* General description search
 * Amount filtering
 * Pagination
 * Sorting by creation date
 
-### 📊 Expense Analytics
+### Expense Analytics
 
 The API provides:
 
@@ -87,7 +93,7 @@ Example:
 
 ---
 
-# 🛠️ Technologies Used
+# Technologies Used
 
 * **Python**
 * **Flask**
@@ -103,9 +109,9 @@ Example:
 
 ---
 
-# 📁 Project Structure
+#  Project Structure
 
-A recommended project structure for this application:
+The current learning version keeps most application logic inside `app.py`.
 
 ```text
 expense-tracker-api/
@@ -124,9 +130,7 @@ expense-tracker-api/
     └── ...
 ```
 
-For the current learning version, most of the application logic is contained in `app.py`.
-
-As the project grows, the application can be refactored into:
+As the project grows, the application can be refactored into a modular structure:
 
 ```text
 expense-tracker-api/
@@ -149,9 +153,9 @@ expense-tracker-api/
 
 ---
 
-# ⚙️ Installation
+#  Installation
 
-## 1. Clone the repository
+## 1. Clone the Repository
 
 ```bash
 git clone https://github.com/YOUR-USERNAME/expense-tracker-api.git
@@ -163,35 +167,31 @@ cd expense-tracker-api
 
 ---
 
-## 2. Create a virtual environment
-
-```bash
-python3 -m venv venv
-```
-
-Activate it:
+## 2. Create a Virtual Environment
 
 ### Linux/macOS
 
 ```bash
+python3 -m venv venv
 source venv/bin/activate
 ```
 
 ### Windows
 
 ```bash
+python -m venv venv
 venv\Scripts\activate
 ```
 
 ---
 
-## 3. Install dependencies
+## 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Example `requirements.txt`:
+Example:
 
 ```text
 Flask
@@ -206,9 +206,9 @@ psycopg2-binary
 
 ---
 
-# 🔑 Environment Variables
+# Environment Variables
 
-Create a `.env` file:
+Create a `.env` file in the project root:
 
 ```env
 DATABASE_URL=your_database_url
@@ -233,7 +233,7 @@ __pycache__/
 *.pyc
 ```
 
-You can provide a `.env.example` file:
+You can safely commit an `.env.example` file:
 
 ```env
 DATABASE_URL=
@@ -242,9 +242,9 @@ SECRET_KEY=
 
 ---
 
-# 🗄️ Database
+# Database
 
-The application uses SQLAlchemy for database interaction.
+The application uses **SQLAlchemy** as its ORM.
 
 There are two primary models:
 
@@ -271,9 +271,11 @@ Expenses
 └── user_id
 ```
 
-### Relationship
+---
 
-One user can have many expenses:
+## Database Relationship
+
+One user can have many expenses.
 
 ```text
 User
@@ -284,7 +286,7 @@ User
   └── Expense
 ```
 
-The relationship is implemented using:
+The relationship is implemented using SQLAlchemy:
 
 ```python
 expenses = db.relationship(
@@ -302,9 +304,19 @@ owner = db.relationship(
 )
 ```
 
+Each expense contains a foreign key:
+
+```python
+user_id = db.Column(
+    db.Integer,
+    db.ForeignKey("user.id"),
+    nullable=False
+)
+```
+
 ---
 
-# 🔄 Database Migrations
+# Database Migrations
 
 Initialize migrations if required:
 
@@ -324,7 +336,7 @@ Apply the migration:
 flask db upgrade
 ```
 
-After changing your models:
+After modifying the models:
 
 ```bash
 flask db migrate -m "describe your change"
@@ -366,7 +378,7 @@ Hello world
 
 ---
 
-# 🔐 Authentication API
+# Authentication API
 
 ## Register
 
@@ -405,7 +417,7 @@ POST /api/v1/auth/register
 
 ---
 
-# Login
+# 🔑 Login
 
 ```http
 POST /api/v1/auth/login
@@ -420,7 +432,7 @@ POST /api/v1/auth/login
 }
 ```
 
-The API generates:
+The API creates:
 
 * Access token
 * Refresh token
@@ -444,7 +456,7 @@ The tokens are stored in cookies.
 
 ---
 
-# 🚪 Logout
+# Logout
 
 ```http
 POST /api/v1/auth/logout
@@ -470,13 +482,15 @@ The JWT cookies are removed.
 
 ---
 
-# 🔄 Refresh Access Token
+# Refresh Access Token
 
 ```http
 POST /api/v1/auth/refresh
 ```
 
 Requires a valid refresh token.
+
+A new access token is generated and stored in the access-token cookie.
 
 ### Response
 
@@ -494,18 +508,21 @@ Requires a valid refresh token.
 
 ---
 
-# 💰 Expense API
+# Expense API
 
-All expense endpoints require authentication.
+All expense endpoints require JWT authentication.
 
-```text
-Authorization:
-JWT stored in authentication cookies
+The API retrieves the authenticated user's ID using:
+
+```python
+user_id = get_jwt_identity()
 ```
+
+The JWT is stored in authentication cookies.
 
 ---
 
-# ➕ Create Expense
+# Create Expense
 
 ```http
 POST /api/v1/expenses
@@ -531,7 +548,7 @@ POST /api/v1/expenses
         "description": "Lunch",
         "amount": 500,
         "user_id": 1,
-        "created_at": "2026-09-12T13:30:00+03:00"
+        "created_at": "2026-09-17T15:30:00+03:00"
     }
 }
 ```
@@ -542,17 +559,60 @@ POST /api/v1/expenses
 201 Created
 ```
 
-The expense timestamp is stored using UTC and converted to the `Africa/Nairobi` timezone when returned by the API.
+---
+
+# Timezone Handling
+
+Expenses are created using a UTC timestamp:
+
+```python
+datetime.now(timezone.utc)
+```
+
+When the expense is returned after creation, the timestamp is converted to:
+
+```text
+Africa/Tanzania
+```
+
+using:
+
+```python
+ZoneInfo("Africa/Nairobi")
+```
+
+Example:
+
+```text
+2026-09-17T15:30:00+03:00
+```
+
+The database column is timezone-aware:
+
+```python
+created_at = db.Column(
+    db.DateTime(timezone=True),
+    nullable=False
+)
+```
+
+> Note: The current implementation explicitly converts the response timestamp to `Africa/Nairobi`. It does not automatically detect an arbitrary timezone from each API client.
 
 ---
 
-# 📋 Get Expenses
+# Get Expenses
 
 ```http
 GET /api/v1/expenses
 ```
 
 Returns expenses belonging to the authenticated user.
+
+Expenses are sorted by:
+
+```text
+created_at DESC
+```
 
 Example:
 
@@ -562,7 +622,7 @@ GET /api/v1/expenses
 
 ---
 
-# 📄 Pagination
+# Pagination
 
 Pagination is supported using:
 
@@ -605,33 +665,48 @@ Example response:
 }
 ```
 
-`per_page` must be between:
+The current API limits `per_page` to:
 
 ```text
 1 - 100
 ```
 
+The default is:
+
+```text
+page = 1
+per_page = 5
+```
+
 ---
 
-# 🔎 Filter by ID
+# Filter by ID
 
 ```http
 GET /api/v1/expenses?id=5
 ```
 
+The ID must be an integer.
+
 ---
 
-# 🏷️ Filter by Category
+# Filter by Category
 
 ```http
 GET /api/v1/expenses?category=Food
 ```
 
-Category matching uses SQLAlchemy's `ilike()` for case-insensitive matching.
+Category filtering uses SQLAlchemy's:
+
+```python
+ilike()
+```
+
+which provides case-insensitive matching.
 
 ---
 
-# 🔍 Search by Description
+# Search by Description
 
 ```http
 GET /api/v1/expenses?search=lunch
@@ -639,9 +714,15 @@ GET /api/v1/expenses?search=lunch
 
 The search is performed against the expense description.
 
+The search uses:
+
+```python
+Expenses.description.ilike(f"%{search}%")
+```
+
 ---
 
-# 📝 Filter by Description
+# Filter by Description
 
 ```http
 GET /api/v1/expenses?description=lunch
@@ -649,15 +730,17 @@ GET /api/v1/expenses?description=lunch
 
 ---
 
-# 💵 Filter by Amount
+# Filter by Amount
 
 ```http
 GET /api/v1/expenses?amount=500
 ```
 
+The amount is converted to a floating-point number before filtering.
+
 ---
 
-# 🔗 Combine Filters
+# Combine Filters
 
 Multiple query parameters can be combined.
 
@@ -669,13 +752,15 @@ GET /api/v1/expenses?category=Food&search=lunch&page=1&per_page=5
 
 ---
 
-# 📊 Category Totals
+# Category Totals
 
 ```http
 GET /api/v1/expenses/category-totals
 ```
 
-Returns the total amount spent in each category by the authenticated user.
+Returns total spending grouped by category for the authenticated user.
+
+It also returns the user's gross total spending.
 
 Example:
 
@@ -707,6 +792,8 @@ and:
 group_by(Expenses.category)
 ```
 
+The query is restricted to the authenticated user's expenses.
+
 ---
 
 # ✏️ Update Expense
@@ -723,14 +810,14 @@ PATCH /api/v1/expenses/5
 
 ### Request
 
+Only the fields that need to change have to be supplied.
+
 ```json
 {
     "category": "Shopping",
     "amount": 2500
 }
 ```
-
-Only the fields provided in the request are updated.
 
 ### Response
 
@@ -746,9 +833,15 @@ Only the fields provided in the request are updated.
 }
 ```
 
+### Status
+
+```text
+200 OK
+```
+
 ---
 
-# 🗑️ Delete Expense
+#  Delete Expense
 
 ```http
 DELETE /api/v1/expenses/<id>
@@ -760,7 +853,19 @@ Example:
 DELETE /api/v1/expenses/5
 ```
 
-The API ensures that the expense belongs to the authenticated user before deleting it.
+The API first searches for the expense using both:
+
+```text
+user_id
+```
+
+and:
+
+```text
+expense_id
+```
+
+This ensures that a user can only delete their own expense.
 
 ### Response
 
@@ -770,15 +875,15 @@ The API ensures that the expense belongs to the authenticated user before deleti
 
 ---
 
-# 🔒 User Data Isolation
+# User Data Isolation
 
-Expenses are associated with the authenticated user through:
+Expenses are associated with the authenticated user through the JWT identity:
 
 ```python
 user_id = get_jwt_identity()
 ```
 
-Queries are restricted using the authenticated user's ID.
+Queries are restricted to that user's records.
 
 For example:
 
@@ -789,19 +894,19 @@ Expenses.query.filter_by(
 ).first()
 ```
 
-This prevents one authenticated user from modifying another user's expenses.
+This authorization pattern prevents users from directly accessing, updating, or deleting another user's expenses through the expense ID alone.
 
 ---
 
-# 🛡️ Rate Limiting
+# Rate Limiting
 
-Login requests are limited to:
+Login requests are currently limited to:
 
 ```python
 @limiter.limit("3 per minute")
 ```
 
-This helps reduce basic brute-force login attempts.
+This provides basic protection against repeated login attempts.
 
 If the limit is exceeded:
 
@@ -817,13 +922,19 @@ Status:
 429 Too Many Requests
 ```
 
+The current limiter uses the remote client address as its key:
+
+```python
+get_remote_address
+```
+
 ---
 
-# ⚠️ JWT Error Handling
+# JWT Error Handling
 
-The API provides custom responses for common JWT problems.
+The API provides custom responses for common JWT authentication failures.
 
-### Expired Token
+## Expired Token
 
 ```json
 {
@@ -832,7 +943,13 @@ The API provides custom responses for common JWT problems.
 }
 ```
 
-### Invalid Token
+Status:
+
+```text
+401 Unauthorized
+```
+
+## Invalid Token
 
 ```json
 {
@@ -841,7 +958,13 @@ The API provides custom responses for common JWT problems.
 }
 ```
 
-### Missing Authentication
+Status:
+
+```text
+401 Unauthorized
+```
+
+## Missing Authentication
 
 ```json
 {
@@ -850,35 +973,49 @@ The API provides custom responses for common JWT problems.
 }
 ```
 
+Status:
+
+```text
+401 Unauthorized
+```
+
 ---
 
 # 🧪 Testing With Postman
 
-Recommended testing flow:
+A recommended testing flow is:
 
 ```text
 1. Register
-      ↓
+       ↓
 2. Login
-      ↓
-3. Cookie is received
-      ↓
-4. Create expense
-      ↓
+       ↓
+3. Authentication cookies are received
+       ↓
+4. Create expenses
+       ↓
 5. Get expenses
-      ↓
+       ↓
 6. Filter/search expenses
-      ↓
-7. View category totals
-      ↓
-8. Update expense
-      ↓
-9. Delete expense
-      ↓
-10. Logout
+       ↓
+7. Test pagination
+       ↓
+8. View category totals
+       ↓
+9. Update an expense
+       ↓
+10. Delete an expense
+       ↓
+11. Test logout
+       ↓
+12. Test protected endpoints after logout
 ```
 
-Example test data:
+---
+
+## Example Test Data
+
+### Food
 
 ```json
 {
@@ -888,6 +1025,8 @@ Example test data:
 }
 ```
 
+### Transport
+
 ```json
 {
     "category": "Transport",
@@ -896,6 +1035,8 @@ Example test data:
 }
 ```
 
+### Shopping
+
 ```json
 {
     "category": "Shopping",
@@ -903,6 +1044,8 @@ Example test data:
     "amount": 2500
 }
 ```
+
+### Bills
 
 ```json
 {
@@ -914,24 +1057,70 @@ Example test data:
 
 ---
 
-# 📌 HTTP Status Codes
+# 🧪 API Testing Checklist
 
-| Status | Meaning                                     |
-| ------ | ------------------------------------------- |
-| `200`  | Request successful                          |
-| `201`  | Resource created                            |
-| `204`  | Resource deleted successfully               |
-| `400`  | Invalid request                             |
-| `401`  | Authentication required/invalid credentials |
-| `404`  | Resource not found                          |
-| `409`  | Conflict, such as existing email            |
-| `429`  | Rate limit exceeded                         |
+Use Postman to test both successful and unsuccessful requests.
+
+### Authentication
+
+* [ ] Register with valid data
+* [ ] Register without JSON
+* [ ] Register with missing fields
+* [ ] Register using an existing email
+* [ ] Login with valid credentials
+* [ ] Login with an incorrect username
+* [ ] Login with an incorrect password
+* [ ] Login without JSON
+* [ ] Login with missing credentials
+* [ ] Exceed the login rate limit
+* [ ] Logout
+* [ ] Refresh access token
+* [ ] Access a protected endpoint without authentication
+
+### Expenses
+
+* [ ] Create a valid expense
+* [ ] Create expense without JSON
+* [ ] Create expense without category
+* [ ] Create expense without description
+* [ ] Create expense with invalid amount
+* [ ] Get expenses
+* [ ] Filter by ID
+* [ ] Filter by category
+* [ ] Search description
+* [ ] Filter by description
+* [ ] Filter by amount
+* [ ] Combine filters
+* [ ] Test pagination
+* [ ] Test invalid page
+* [ ] Test invalid `per_page`
+* [ ] View category totals
+* [ ] Update an expense
+* [ ] Update only one field
+* [ ] Update a nonexistent expense
+* [ ] Delete an expense
+* [ ] Attempt to access another user's expense
 
 ---
 
-# 🔐 Security Considerations
+# 📌 HTTP Status Codes
 
-This project currently contains development-oriented JWT cookie settings:
+| Status | Meaning                                        |
+| ------ | ---------------------------------------------- |
+| `200`  | Request successful                             |
+| `201`  | Resource created                               |
+| `204`  | Resource deleted successfully                  |
+| `400`  | Invalid request                                |
+| `401`  | Authentication required or invalid credentials |
+| `404`  | Resource not found                             |
+| `409`  | Conflict, such as an existing email            |
+| `429`  | Rate limit exceeded                            |
+
+---
+
+# 🔐 Security Configuration
+
+The current development configuration contains intentionally relaxed JWT cookie settings:
 
 ```python
 JWT_COOKIE_SECURE = False
@@ -940,52 +1129,76 @@ JWT_COOKIE_HTTPONLY = False
 JWT_COOKIE_SAMESITE = "Lax"
 ```
 
-For production deployment, these settings should be hardened.
+These settings are suitable only for local development/testing and should be reviewed before production deployment.
 
-Recommended production configuration includes:
+For a production HTTPS deployment, the configuration should be hardened:
 
 ```python
 JWT_COOKIE_SECURE = True
-JWT_COOKIE_CSRF_PROTECT = True
+JWT_COOKIE_CSFR_PROTECT = True
 JWT_COOKIE_HTTPONLY = True
 JWT_COOKIE_SAMESITE = "Strict"
 ```
 
+> Ensure the configuration key is spelled `JWT_COOKIE_CSRF_PROTECT` in the actual application.
+
 The API should also be deployed behind HTTPS.
 
-Additional production improvements include:
+---
+
+#  Planned Production Security Improvements
+
+Potential future improvements include:
 
 * Strong randomly generated secret keys
 * Password-strength requirements
 * Account lockout or progressive delays
+* Account-based login rate limiting
 * Refresh-token revocation
 * JWT blocklist/revocation
 * Audit logging
 * Security headers
+* CSRF protection
 * CORS configuration
 * Centralized error handling
 * Persistent rate-limit storage such as Redis
 * Automated tests
 * Input/schema validation
-* Production WSGI server such as Gunicorn
-* PostgreSQL in production
+* Gunicorn production WSGI server
+* PostgreSQL production database
 * Environment-specific configuration
+* HTTPS/TLS
+* Secure cookie configuration
 
 ---
 
-# 🧠 What This Project Demonstrates
+# What This Project Demonstrates
 
-This project demonstrates practical backend/API concepts including:
+This project demonstrates practical backend and API development concepts including:
 
-* REST API design
+### Python & Flask
+
+* Python application structure
 * Flask routing
 * HTTP methods
+* Request handling
 * JSON request/response handling
-* HTTP status codes
+
+### REST API Development
+
+* REST endpoint design
 * CRUD operations
+* Query parameters
+* HTTP status codes
+* API error responses
+* Pagination
+
+### Database Development
+
 * SQLAlchemy ORM
-* Database relationships
+* Database models
 * Foreign keys
+* One-to-many relationships
 * SQL filtering
 * `filter_by()`
 * `filter()`
@@ -993,17 +1206,41 @@ This project demonstrates practical backend/API concepts including:
 * SQL aggregation
 * `func.sum()`
 * `group_by()`
-* Pagination
-* JWT authentication
-* Access and refresh tokens
-* Cookie-based authentication
+* Database migrations
+
+### Authentication & Authorization
+
+* User registration
 * Password hashing
-* Rate limiting
+* JWT authentication
+* Access tokens
+* Refresh tokens
+* Cookie-based authentication
+* JWT expiration
+* JWT error handling
+* User-specific authorization
+* Data isolation
+
+### Basic API Security
+
+* Password hashing
+* Login rate limiting
+* Authentication enforcement
+* Input validation
+* Secure database ownership checks
 * Environment variables
-* Timezone-aware timestamps
-* User-based authorization
+* Cookie security considerations
 
+### Time Handling
 
+* UTC timestamps
+* Timezone-aware database fields
+* `datetime`
+* `timezone.utc`
+* `ZoneInfo`
+* Africa/Tanzania timezone conversion
+
+---
 
 # 🎯 Project Goal
 
@@ -1018,6 +1255,8 @@ REST APIs
    ↓
 SQLAlchemy
    ↓
+Database Relationships
+   ↓
 Authentication
    ↓
 Authorization
@@ -1027,12 +1266,10 @@ API Security
 Production Deployment
 ```
 
-The project serves as a foundation for building more advanced **secure backend APIs and security-focused applications**.
+The project provides a foundation for building more advanced **secure backend APIs and security-focused applications**.
 
----
 
-## 📄 License
+
+# 📄 License
 
 This project is intended for learning and development purposes.
-
-
