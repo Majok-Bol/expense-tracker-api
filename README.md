@@ -1,4 +1,4 @@
-# 💰 Expense Tracker API
+# Expense Tracker API
 
 A RESTful **Expense Tracker API** built with **Python and Flask**.
 
@@ -350,7 +350,7 @@ flask db upgrade
 
 ---
 
-# ▶️ Running the API
+# Running the API
 
 Start the Flask development server:
 
@@ -417,7 +417,7 @@ POST /api/v1/auth/register
 
 ---
 
-# 🔑 Login
+# Login
 
 ```http
 POST /api/v1/auth/login
@@ -1103,7 +1103,7 @@ Use Postman to test both successful and unsuccessful requests.
 
 ---
 
-# 📌 HTTP Status Codes
+#  HTTP Status Codes
 
 | Status | Meaning                                        |
 | ------ | ---------------------------------------------- |
@@ -1118,7 +1118,7 @@ Use Postman to test both successful and unsuccessful requests.
 
 ---
 
-# 🔐 Security Configuration
+# Security Configuration
 
 The current development configuration contains intentionally relaxed JWT cookie settings:
 
@@ -1242,7 +1242,7 @@ This project demonstrates practical backend and API development concepts includi
 
 ---
 
-# 🎯 Project Goal
+# Project Goal
 
 The goal of this project is to build a practical REST API while developing strong foundations in:
 
@@ -1270,6 +1270,6 @@ The project provides a foundation for building more advanced **secure backend AP
 
 
 
-# 📄 License
+# License
 
 This project is intended for learning and development purposes.
