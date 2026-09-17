@@ -1140,38 +1140,9 @@ JWT_COOKIE_HTTPONLY = True
 JWT_COOKIE_SAMESITE = "Strict"
 ```
 
-> Ensure the configuration key is spelled `JWT_COOKIE_CSRF_PROTECT` in the actual application.
-
 The API should also be deployed behind HTTPS.
 
 ---
-
-#  Planned Production Security Improvements
-
-Potential future improvements include:
-
-* Strong randomly generated secret keys
-* Password-strength requirements
-* Account lockout or progressive delays
-* Account-based login rate limiting
-* Refresh-token revocation
-* JWT blocklist/revocation
-* Audit logging
-* Security headers
-* CSRF protection
-* CORS configuration
-* Centralized error handling
-* Persistent rate-limit storage such as Redis
-* Automated tests
-* Input/schema validation
-* Gunicorn production WSGI server
-* PostgreSQL production database
-* Environment-specific configuration
-* HTTPS/TLS
-* Secure cookie configuration
-
----
-
 # What This Project Demonstrates
 
 This project demonstrates practical backend and API development concepts including:
