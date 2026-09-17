@@ -578,7 +578,7 @@ Africa/Tanzania
 using:
 
 ```python
-ZoneInfo("Africa/Nairobi")
+ZoneInfo("Africa/Tanzania")
 ```
 
 Example:
@@ -796,7 +796,7 @@ The query is restricted to the authenticated user's expenses.
 
 ---
 
-# ✏️ Update Expense
+# Update Expense
 
 ```http
 PATCH /api/v1/expenses/<id>
@@ -981,7 +981,7 @@ Status:
 
 ---
 
-# 🧪 Testing With Postman
+#  Testing With Postman
 
 A recommended testing flow is:
 
@@ -1057,7 +1057,7 @@ A recommended testing flow is:
 
 ---
 
-# 🧪 API Testing Checklist
+#  API Testing Checklist
 
 Use Postman to test both successful and unsuccessful requests.
 
